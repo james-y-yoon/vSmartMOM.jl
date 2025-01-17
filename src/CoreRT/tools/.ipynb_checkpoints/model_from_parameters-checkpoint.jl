@@ -90,7 +90,7 @@ function model_from_parameters(params::vSmartMOM_Parameters)
 
                 # JY: Added isoprene
                 if ( params.absorption_params.molecules[i_band][molec_i] == "ISOP" )
-                    @timeit "Absorption Coeff"  compute_absorption_profile_isoprene!(τ_abs[i_band], absorption_model, params.spec_bands[i_band],profile.vmr[params.absorption_params.molecules[i_band][molec_i]], profile);
+                    compute_absorption_profile_isoprene!(τ_abs[i_band], absorption_model, params.spec_bands[i_band],profile.vmr[params.absorption_params.molecules[i_band][molec_i]], profile);
                 else
                     @timeit "Absorption Coeff"  compute_absorption_profile!(τ_abs[i_band], absorption_model, params.spec_bands[i_band],profile.vmr[params.absorption_params.molecules[i_band][molec_i]], profile);
                 end
