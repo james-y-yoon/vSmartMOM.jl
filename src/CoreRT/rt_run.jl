@@ -42,6 +42,10 @@ function rt_run(RS_type::AbstractRamanType,
                     model::vSmartMOM_Model, iBand)
     @unpack obs_alt, sza, vza, vaz = model.obs_geom   # Observational geometry properties
     @unpack qp_μ, wt_μ, qp_μN, wt_μN, iμ₀Nstart, μ₀, iμ₀, Nquad = model.quad_points # All quadrature points
+
+    temp_profile = model.profile.T; # Added to calculate thermal emissions at each layer (JY)
+    wavenumber_region = model.params.spec_bands; # Added to calculate thermal emissions at each layer (JY)
+    
     pol_type = model.params.polarization_type
     @unpack max_m = model.params
     @unpack quad_points = model
@@ -60,8 +64,6 @@ function rt_run(RS_type::AbstractRamanType,
 
     #FT = eltype(sza)                   # Get the float-type to use
     Nz = length(model.profile.p_full)   # Number of vertical slices
-    
-    
     
     RS_type.bandSpecLim = [] # (1:τ_abs[iB])#zeros(Int64, iBand, 2) #Suniti: how to do this?
     #Suniti: make bandSpecLim a part of RS_type (including noRS) so that it can be passed into rt_kernel and elemental/doubling/interaction and postprocessing_vza without major syntax changes
@@ -118,7 +120,7 @@ function rt_run(RS_type::AbstractRamanType,
     
         #TODO: if RS_type!=noRS, create ϖ_λ₁λ₀, i_λ₁λ₀, fscattRayl, Z⁺⁺_λ₁λ₀, Z⁻⁺_λ₁λ₀ (for input), and ieJ₀⁺, ieJ₀⁻, ieR⁺⁻, ieR⁻⁺, ieT⁻⁻, ieT⁺⁺, ier⁺⁻, ier⁻⁺, iet⁻⁻, iet⁺⁺ (for output)
     #getRamanSSProp(RS_type, λ, grid_in)
-    
+
     println("Finished initializing arrays")
 
     # Loop over fourier moments
@@ -140,7 +142,9 @@ function rt_run(RS_type::AbstractRamanType,
 
         # Loop over vertical layers: 
         @showprogress 1 "Looping over layers ..." for iz = 1:Nz  # Count from TOA to BOA
-            
+
+            temperature_of_layer = temp_profile[iz];
+        
             # Construct the atmospheric layer
             # From Rayleigh and aerosol τ, ϖ, compute overall layer τ, ϖ
             # Suniti: modified to return fscattRayl as the last element of  computed_atmosphere_properties
@@ -162,7 +166,7 @@ function rt_run(RS_type::AbstractRamanType,
                         m, quad_points, 
                         I_static, 
                         model.params.architecture, 
-                        qp_μN, iz) 
+                        qp_μN, iz, temperature_of_layer, wavenumber_region) 
         end 
 
         # Create surface matrices:
@@ -212,6 +216,7 @@ function rt_run(RS_type::AbstractRamanType,
             vza, qp_μ, m, vaz, μ₀, 
             weight, nSpec, 
             hdr)
+    @show 
             
     end
 

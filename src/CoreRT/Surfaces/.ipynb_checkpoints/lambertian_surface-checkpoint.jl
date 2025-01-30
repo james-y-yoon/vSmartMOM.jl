@@ -32,10 +32,11 @@ function create_surface_layer!(lambertian::LambertianSurfaceScalar{FT},
     tmp    = ones(pol_type.n*Nquad)
     arr_type = array_type(architecture)
     T_surf = arr_type(Diagonal(tmp))
-    
     if m == 0
         # Albedo normalized by π (and factor 2 for 0th Fourier Moment)
         ρ = 2lambertian.albedo#/FT(π)
+        
+        
         
         R_surf = Array(Diagonal(vcat(ρ, zeros(FT,pol_type.n-1))))
         R_surf = repeat(R_surf',Nquad)
@@ -43,6 +44,7 @@ function create_surface_layer!(lambertian::LambertianSurfaceScalar{FT},
         
         # Move to architecture:
         R_surf = arr_type(R_surf)
+
         
         # Source function of surface:
         if SFI

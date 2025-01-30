@@ -1,4 +1,3 @@
-using Plots;
 #=
  
 This file contains RT elemental-related functions
@@ -98,7 +97,6 @@ function elemental!(pol_type, SFI::Bool,
 
         if SFI
             apply_D_matrix_elemental_SFI!(ndoubl, pol_type.n, J₀⁻)
-            apply_D_matrix_elemental_SFI!(ndoubl, pol_type.n, J₀⁻_thermal)
         end      
     else 
         # Note: τ is not defined here
@@ -106,7 +104,6 @@ function elemental!(pol_type, SFI::Bool,
         t⁻⁻[:] = Diagonal{exp(-τ ./ qp_μN)}
     end    
     #@pack! added_layer = r⁺⁻, r⁻⁺, t⁻⁻, t⁺⁺, J₀⁺, J₀⁻   
-
 end
 
 "Elemental single-scattering layer"
@@ -122,7 +119,7 @@ function elemental!(pol_type, SFI::Bool,
                             architecture,
                             layer_planck_function) where {FT<:Union{AbstractFloat, ForwardDiff.Dual},FT2}
 
-    @unpack r⁺⁻, r⁻⁺, t⁻⁻, t⁺⁺, j₀⁺, j₀⁻, j₀⁺_thermal, j₀⁻_thermal = added_layer
+    @unpack r⁺⁻, r⁻⁺, t⁻⁻, t⁺⁺, j₀⁺, j₀⁻ = added_layer
     @unpack qp_μ, iμ₀, wt_μN, qp_μN = quad_points
     @unpack τ, ϖ, Z⁺⁺, Z⁻⁺ = computed_layer_properties
     #@show M
@@ -150,43 +147,10 @@ function elemental!(pol_type, SFI::Bool,
 
         # SFI part
         kernel! = get_elem_rt_SFI!(device)
-        event = kernel!(j₀⁺, j₀⁻, ϖ, dτ, arr_type(τ_sum), Z⁻⁺, Z⁺⁺, qp_μN, ndoubl, wct02, pol_type.n, I₀, iμ₀, D, ndrange=size(j₀⁺))
+        event = kernel!(j₀⁺, j₀⁻, ϖ, dτ, arr_type(τ_sum), Z⁻⁺, Z⁺⁺, qp_μN, ndoubl, wct02, pol_type.n, I₀, iμ₀, D, ndrange=size(j₀⁺), layer_planck_function, wt_μN, m)
         #wait(device, event)
         synchronize_if_gpu()
         
-        # Thermal Emissions Part (JY)
-        kernel! = get_thermal_emissions_SFI!(device)
-        event = kernel!(j₀⁺_thermal, j₀⁻_thermal, ndoubl, pol_type.n, D, layer_planck_function, wt_μN, m, ndrange=size(j₀⁺_thermal))
-        #wait(device, event)
-        synchronize_if_gpu()
-
-        # if (m == 0)
-        #     if length(j₀⁻_thermal[1, 1, :]) > 0
-        #         p = plot(10:1:2000, [j₀⁻_thermal[2, 1, :], j₀⁻[2, 1, :]], title = "m = 0, outgoing radiation (j-), Planck function / weight", labels = ["Source term" "Sun term"], xlabel = "Wavenumber (cm-1)", ylabel = "W/m2/cm-1/sr", dpi=300)
-        #        Plots.savefig(p, "J_source_terms.png")
-        #     end
-        #  end
-
-        #  if (m == 1)
-        #     if length(j₀⁻_thermal[1, 1, :]) > 0
-        #         p = plot(10:1:2000, [j₀⁻_thermal[2, 1, :], j₀⁻[2, 1, :]], title = "m = 0, outgoing radiation (j-), Planck function / weight", labels = ["Source term" "Sun term"], xlabel = "Wavenumber (cm-1)", ylabel = "W/m2/cm-1/sr", dpi=300)
-        #        Plots.savefig(p, "J_source_terms_m1.png")
-        #     end
-        #  end
-
-        #  if (m == 2)
-        #     if length(j₀⁻_thermal[1, 1, :]) > 0
-        #      p = plot(10:1:2000, [j₀⁻_thermal[2, 1, :], j₀⁻[2, 1, :]], title = "m = 0, outgoing radiation (j-), Planck function / weight", labels = ["Source term" "Sun term"], xlabel = "Wavenumber (cm-1)", ylabel = "W/m2/cm-1/sr", dpi=300)
-        #        Plots.savefig(p, "J_source_terms_m2.png")
-        #     end
-        #  end
-
-        # p = plot(10:10:4000, [j₀⁻[4, 1, :]], title = "Solar term", labels = ["Sun term"], xlabel = "Wavenumber (cm-1)", ylabel = "W/m2/cm-1/sr", dpi=300)
-        # Plots.savefig(p, "solar_term_upwelling.png")
-
-        # p = plot(10:10:4000, [j₀⁺[4, 1, :]], title = "Solar term", labels = ["Sun term"], xlabel = "Wavenumber (cm-1)", ylabel = "W/m2/cm-1/sr", dpi=300)
-        # Plots.savefig(p, "solar_term_downwelling.png")
-
         # Apply D Matrix
         apply_D_matrix_elemental!(ndoubl, pol_type.n, r⁻⁺, t⁺⁺, r⁺⁻, t⁻⁻)
 
@@ -244,20 +208,17 @@ end
     nothing
 end
 
-@kernel function get_elem_rt_SFI!(J₀⁺, J₀⁻, ϖ_λ, dτ_λ, τ_sum, Z⁻⁺, Z⁺⁺, μ, ndoubl, wct02, nStokes ,I₀, iμ0, D)
-    
+@kernel function get_elem_rt_SFI!(J₀⁺, J₀⁻, ϖ_λ, dτ_λ, τ_sum, Z⁻⁺, Z⁺⁺, μ, ndoubl, wct02, nStokes ,I₀, iμ0, D, layer_planck_function, wt_μN, m)
     i_start  = nStokes*(iμ0-1) + 1 
     i_end    = nStokes*iμ0
 
     i, _, n = @index(Global, NTuple) ##Suniti: What are Global and Ntuple?
     
     FT = eltype(I₀)
-    
     J₀⁺[i, 1, n]=0
     J₀⁻[i, 1, n]=0
     
     n2=1
-
     if size(Z⁻⁺,3)>1
         n2 = n
     end
@@ -280,6 +241,7 @@ end
         # See Eq. 1.53 in Fell
         
         J₀⁺[i, 1, n] = wct02 * ϖ_λ[n] * Z⁺⁺_I₀ * (μ[i_start] / (μ[i] - μ[i_start])) * (exp(-dτ_λ[n] / μ[i]) - exp(-dτ_λ[n] / μ[i_start]))
+    
     end
 
     #J₀⁻ = 0.25*(1+δ(m,0)) * ϖ(λ) * Z⁻⁺ * I₀ * [μ₀ / (μᵢ + μ₀)] * [1 - exp{-dτ(λ)(1/μᵢ + 1/μ₀)}]
@@ -292,31 +254,22 @@ end
     if ndoubl >= 1
         J₀⁻[i, 1, n] = D[i,i]*J₀⁻[i, 1, n] #D = Diagonal{1,1,-1,-1,...Nquad times}
     end  
-    nothing
-end
 
-@kernel function get_thermal_emissions_SFI!(J₀⁺_thermal, J₀⁻_thermal, ndoubl, nStokes, D, layer_planck_function, wt_μN, m)
-
-    i, _, n = @index(Global, NTuple) ##Suniti: What are Global and Ntuple?    
-
-    J₀⁺_thermal[i, 1, n] = 0
-    J₀⁻_thermal[i, 1, n] = 0
-    
     ### ADDED BY JY FOR THERMAL EMISSIONS ###
-    if (m == 0) && (((i-1) % nStokes) == 0)
-        if (wt_μN[i] != 0)
-            J₀⁻_thermal[i, 1, n] = layer_planck_function[n] ./ wt_μN[i];
-            J₀⁺_thermal[i, 1, n] = layer_planck_function[n] ./ wt_μN[i];
+    if (m == 0) && (((i - 1) % nStokes) == 0)
+        if (wt_μN[i] == 0)
+            J₀⁻[i, 1, n] = J₀⁻[i, 1, n] .+ ((1 .- ϖ_λ[n]) .* layer_planck_function[n]);
+            J₀⁺[i, 1, n] = J₀⁺[i, 1, n] .+ ((1 .- ϖ_λ[n]) .* layer_planck_function[n]);
         else
-            J₀⁻_thermal[i, 1, n] = layer_planck_function[n];
-            J₀⁺_thermal[i, 1, n] = layer_planck_function[n];            
+            J₀⁻[i, 1, n] = J₀⁻[i, 1, n] .+ ((1 .- ϖ_λ[n]) .* layer_planck_function[n] ./ wt_μN[i]);
+            J₀⁺[i, 1, n] = J₀⁺[i, 1, n] .+ ((1 .- ϖ_λ[n]) .* layer_planck_function[n] ./ wt_μN[i]);
+
+            @show "SOURCE TERM" J₀⁻[i, 1, n], J₀⁺[i, 1, n];
         end
     end
     ### ADDED BY JY FOR THERMAL EMISSIONS ###
-
-    if ndoubl >= 1
-        J₀⁻_thermal[i, 1, n] = D[i,i] * J₀⁻_thermal[i, 1, n] #D = Diagonal{1,1,-1,-1,...Nquad times}
-    end  
+    
+    
     nothing
 end
 

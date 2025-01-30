@@ -114,6 +114,8 @@ function make_added_layer(RS_type::Union{noRS, noRS_plus}, FT, arr_type, dims, n
                                                         default_matrix(FT, arr_type, dims, nSpec),
                                                         default_J_matrix(FT, arr_type, dims, nSpec),
                                                         default_J_matrix(FT, arr_type, dims, nSpec),
+                                                        default_J_matrix(FT, arr_type, dims, nSpec),
+                                                        default_J_matrix(FT, arr_type, dims, nSpec),
                                                         t1,
                                                         t2,
                                                         t1_ptr,

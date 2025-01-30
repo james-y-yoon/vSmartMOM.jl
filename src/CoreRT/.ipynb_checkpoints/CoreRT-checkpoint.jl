@@ -16,10 +16,10 @@ using Distributions                # Distributions of aerosols
 using Parameters                   # For keyword arguments in structs
 using ..Scattering                 # Use scattering module
 using ..Absorption                 # Use absorption module
+
 using ..InelasticScattering        # Use Inelastic Scattering module
 using ...vSmartMOM                 # Use parent RadiativeTransfer module
 using ..Architectures             # Use Architectures module
-
 
 using CUDA                         # GPU CuArrays and functions
 using KernelAbstractions           # Abstracting code for CPU/GPU
@@ -72,6 +72,7 @@ include("CoreKernel/rt_kernel.jl")             # Handle Core RT (Elemental/Doubl
 include("CoreKernel/rt_kernel_multisensor.jl") # Suniti: ms
 include("tools/postprocessing_vza.jl")               # Postprocess (Azimuthal Weighting)
 include("tools/postprocessing_vza_ms.jl")
+
 include("rt_run.jl")                           # Starting point for RT 
 include("rt_run_multisensor.jl") 
 # Temporary:
@@ -87,14 +88,14 @@ include("tools/rt_set_streams.jl")                # Set streams before RT
 include("tools/parameters_from_yaml.jl")          # Loading in parameters from YAML file
 include("tools/model_from_parameters.jl")         # Converting parameters to derived model attributes
 include("tools/show_utils.jl")                    # Pretty-printing objects
+include("tools/thermal_emissions.jl")             # Adds thermal emissions (JY)
+
 include("LayerOpticalProperties/compEffectiveLayerProperties.jl")
 
 # Surfaces
 include("Surfaces/lambertian_surface.jl")            # Lambertian Surface 
 include("Surfaces/rpv_surface.jl")            # Lambertian Surface 
 include("Surfaces/rossli_surface.jl")
-
-
 
 # Functions to export
 export parameters_from_yaml,                # Getting parameters from a file

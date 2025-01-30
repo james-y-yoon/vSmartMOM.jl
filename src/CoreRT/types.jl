@@ -131,6 +131,10 @@ Base.@kwdef struct AddedLayer{FT} <: AbstractLayer
     j₀⁺::AbstractArray{FT,3}
     "Added layer source matrix J (in - direction)"
     j₀⁻::AbstractArray{FT,3}
+    "Added layer thermal source matrix J (in + direction)"
+    j₀⁺_thermal::AbstractArray{FT,3}
+    "Added layer thermal source matrix J (in - direction)"
+    j₀⁻_thermal::AbstractArray{FT,3}
     "Added layer temporary space to avoid allocations"
     temp1::Union{AbstractArray{FT,3}, Nothing}
     "Added layer temporary space to avoid allocations"
@@ -531,7 +535,7 @@ Base.@kwdef struct ComputedAtmosphereProperties
     dτ_max_all
     "dτs"
     dτ_all
-    "Number of doublings (for all layers)"
+    "Number of doublingsi (for all layers)"
     ndoubl_all
     "dτs (wavelength dependent)"
     dτ_λ_all
