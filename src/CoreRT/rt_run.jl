@@ -144,7 +144,7 @@ function rt_run(RS_type::AbstractRamanType,
         @showprogress 1 "Looping over layers ..." for iz = 1:Nz  # Count from TOA to BOA
 
             temperature_of_layer = temp_profile[iz];
-        
+            
             # Construct the atmospheric layer
             # From Rayleigh and aerosol τ, ϖ, compute overall layer τ, ϖ
             # Suniti: modified to return fscattRayl as the last element of  computed_atmosphere_properties
@@ -168,6 +168,8 @@ function rt_run(RS_type::AbstractRamanType,
                         model.params.architecture, 
                         qp_μN, iz, temperature_of_layer, wavenumber_region) 
         end 
+        
+        temperature_of_surface = temp_profile[end];
 
         # Create surface matrices:
         @timeit "Create Surface" create_surface_layer!(brdf, 
@@ -175,10 +177,14 @@ function rt_run(RS_type::AbstractRamanType,
                             SFI, m, 
                             pol_type, 
                             quad_points, 
+                            temperature_of_surface,
+                            wavenumber_region,
                             arr_type(τ_sum_all[:,end]), 
-                            model.params.architecture);
+                            model.params.architecture,
+                            );
         
-        #@show composite_layer.J₀⁺[iμ₀,1,1:3]
+        @show composite_layer.J₀⁺[iμ₀,1,10:end]
+        @show added_layer_surface.j₀⁺[iμ₀,1,10:end]
         # One last interaction with surface:
         @timeit "interaction" interaction!(RS_type,
                                     #bandSpecLim,

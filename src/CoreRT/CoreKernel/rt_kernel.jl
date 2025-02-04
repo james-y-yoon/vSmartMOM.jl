@@ -191,6 +191,9 @@ function rt_kernel!(RS_type::noRS{FT},
     @unpack τ, ϖ, Z⁺⁺, Z⁻⁺ = computed_layer_properties
     # @show ndoubl
     scatter = true # edit later
+
+    # @show ϖ[150]
+    # @show τ[150]
     
     dτ, ndoubl, expk = init_layer(computed_layer_properties, quad_points, pol_type, architecture)
 
@@ -226,16 +229,16 @@ function rt_kernel!(RS_type::noRS{FT},
         end
     end
 
+    # @assert !any(isnan.(added_layer.t⁺⁺))
+
     added_layer.j₀⁻[:] .= 0;
     added_layer.j₀⁺[:] .= 0;
 
-    # @assert !any(isnan.(added_layer.t⁺⁺))
-
     added_layer.j₀⁻ .+= added_layer.j₀⁻_thermal
     added_layer.j₀⁺ .+= added_layer.j₀⁺_thermal
-    
-    added_layer.j₀⁻_thermal[:] .= 0;
-    added_layer.j₀⁺_thermal[:] .= 0;
+
+    # added_layer.j₀⁻_thermal[:] .= 0;
+    # added_layer.j₀⁺_thermal[:] .= 0;
 
     # If this TOA, just copy the added layer into the composite layer
     if (iz == 1)

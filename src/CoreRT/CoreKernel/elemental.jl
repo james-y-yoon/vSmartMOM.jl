@@ -156,7 +156,7 @@ function elemental!(pol_type, SFI::Bool,
         
         # Thermal Emissions Part (JY)
         kernel! = get_thermal_emissions_SFI!(device)
-        event = kernel!(j₀⁺_thermal, j₀⁻_thermal, ndoubl, pol_type.n, D, layer_planck_function, wt_μN, m, ndrange=size(j₀⁺_thermal))
+        event = kernel!(j₀⁺_thermal, j₀⁻_thermal, ϖ, dτ, qp_μN, ndoubl, pol_type.n, D, layer_planck_function, wt_μN, m, ndrange=size(j₀⁺_thermal))
         #wait(device, event)
         synchronize_if_gpu()
 
@@ -295,28 +295,42 @@ end
     nothing
 end
 
-@kernel function get_thermal_emissions_SFI!(J₀⁺_thermal, J₀⁻_thermal, ndoubl, nStokes, D, layer_planck_function, wt_μN, m)
+@kernel function get_thermal_emissions_SFI!(J₀⁺_thermal, J₀⁻_thermal, ϖ, dτ_λ, qp_μN, ndoubl, nStokes, D, layer_planck_function, wt_μN, m)
 
     i, _, n = @index(Global, NTuple) ##Suniti: What are Global and Ntuple?    
 
     J₀⁺_thermal[i, 1, n] = 0
     J₀⁻_thermal[i, 1, n] = 0
+
+    # transmittance = ℯ^(-1 * dτ_λ[n])
+    # absorbed_or_scattered = 1 - transmittance;
+    # scattered = ϖ[n] * absorbed_or_scattered;
+    # absorptivity = absorbed_or_scattered - scattered;
+    absorptivity = (1 - ϖ[n]);
     
     ### ADDED BY JY FOR THERMAL EMISSIONS ###
     if (m == 0) && (((i-1) % nStokes) == 0)
-        if (wt_μN[i] != 0)
-            J₀⁻_thermal[i, 1, n] = layer_planck_function[n] ./ wt_μN[i];
-            J₀⁺_thermal[i, 1, n] = layer_planck_function[n] ./ wt_μN[i];
-        else
-            J₀⁻_thermal[i, 1, n] = layer_planck_function[n];
-            J₀⁺_thermal[i, 1, n] = layer_planck_function[n];            
-        end
+        # if (wt_μN[i] != 0)
+        #     J₀⁻_thermal[i, 1, n] = absorptivity * layer_planck_function[n] .* wt_μN[i];
+        #     J₀⁺_thermal[i, 1, n] = absorptivity * layer_planck_function[n] .* wt_μN[i];
+        # else
+        #     J₀⁻_thermal[i, 1, n] = absorptivity * layer_planck_function[n];
+        #     J₀⁺_thermal[i, 1, n] = absorptivity * layer_planck_function[n];            
+        # end
+        
+        J₀⁻_thermal[i, 1, n] = absorptivity * layer_planck_function[n] * wt_μN[i] * 2 * (1 - exp(-1 * dτ_λ[n] / qp_μN[i])) * 2;
+        J₀⁺_thermal[i, 1, n] = absorptivity * layer_planck_function[n] * wt_μN[i] * 2 * (1 - exp(-1 * dτ_λ[n] / qp_μN[i])) * 2;
+        # @show i,n, (1 - exp(-dτ_λ[n] / qp_μN[i]))
+        
+        # J₀⁻_thermal[i, 1, n] .*= 2; # To undo azimuthal weighting for solar sources in rt_run.jl
+        # J₀⁺_thermal[i, 1, n] .*= 2; # To undo azimuthal weighting for solar sources in rt_run.jl
+
     end
     ### ADDED BY JY FOR THERMAL EMISSIONS ###
 
-    if ndoubl >= 1
-        J₀⁻_thermal[i, 1, n] = D[i,i] * J₀⁻_thermal[i, 1, n] #D = Diagonal{1,1,-1,-1,...Nquad times}
-    end  
+    # if ndoubl >= 1
+    #     J₀⁻_thermal[i, 1, n] = D[i,i] * J₀⁻_thermal[i, 1, n] #D = Diagonal{1,1,-1,-1,...Nquad times}
+    # end  
     nothing
 end
 

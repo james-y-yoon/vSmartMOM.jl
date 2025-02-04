@@ -16,6 +16,8 @@ Computes (in place) surface optical properties for a (scalar) lambertian albedo 
     - `quad_points` Quadrature points struct
     - `τ_sum` total optical thickness from TOA to the surface
     - `architecture` Compute architecture (GPU,CPU)
+    - temperature_of_surface
+    - wavenumber_region
 """ 
 function create_surface_layer!(lambertian::LambertianSurfaceScalar{FT}, 
                                added_layer::Union{AddedLayer,AddedLayerRS},
@@ -23,9 +25,12 @@ function create_surface_layer!(lambertian::LambertianSurfaceScalar{FT},
                                m::Int,
                                pol_type,
                                quad_points,
+                               temperature_of_surface,
+                               wavenumber_region,
                                τ_sum,
-                               architecture) where {FT}
-    
+                               architecture,
+                               ) where {FT}
+
     @unpack qp_μ, wt_μ, qp_μN, wt_μN, iμ₀Nstart, iμ₀, μ₀ = quad_points
     # Get size of added layer
     Nquad = size(added_layer.r⁻⁺,1) ÷ pol_type.n
@@ -52,16 +57,39 @@ function create_surface_layer!(lambertian::LambertianSurfaceScalar{FT},
             
             added_layer.j₀⁺[:,1,:] .= I₀_NquadN .* exp.(-τ_sum/μ₀)';
             added_layer.j₀⁻[:,1,:] .= μ₀*(R_surf*I₀_NquadN) .* exp.(-τ_sum/μ₀)';
+
+            # Thermal emissions (JY)
+            wavenumber_region = collect(Iterators.flatten(wavenumber_region)) # wavenumber_region is a nested vector (JY)
+            planck_function = planck_spectrum_wn(temperature_of_surface, wavenumber_region) ./ 1000.;
+            
+            zeroes = zeros(1, length(planck_function))
+            iquv_iteration = vcat(planck_function', repeat(zeroes, pol_type.n - 1));
+            iquv_and_polarizations = repeat(iquv_iteration, Nquad)
+
+            weights_for_division = copy(wt_μN)
+            weights_for_division[weights_for_division .== 0] .= 1
+            weights_for_division = repeat(weights_for_division, 1, length(wavenumber_region))
+
+            qp_μ_for_division = copy(qp_μ)
+            qp_μ_for_division[qp_μ_for_division .== 0] .= 1
+            qp_μ_for_division = repeat(qp_μ_for_division, 1, length(wavenumber_region))
+
+            # added_layer.j₀⁺[:,1,:] .+= (1 - lambertian.albedo) .* iquv_and_polarizations ./ weights_for_division;
+            added_layer.j₀⁻[:,1,:] .= (1 - lambertian.albedo) .* iquv_and_polarizations .* weights_for_division ./ qp_μ_for_division .* 2;
+            p = plot(wavenumber_region, planck_function, label = "Planck", dpi = 300)
+            for i in 1:16
+                plot!(wavenumber_region, added_layer.j₀⁻[i,1,:], label = "Added Layer")
+            end
+            Plots.savefig(p, "planck_function_surface.png")
         end
-        R_surf = R_surf * Diagonal(qp_μN.*wt_μN)
         
+        R_surf = R_surf * Diagonal(qp_μN.*wt_μN)
 
         #@show size(added_layer.r⁻⁺), size(R_surf), size(added_layer.j₀⁻)
         added_layer.r⁻⁺ .= R_surf;
         added_layer.r⁺⁻ .= 0;
         added_layer.t⁺⁺ .= T_surf;
         added_layer.t⁻⁻ .= T_surf;
-
     else
         added_layer.r⁻⁺ .= 0;
         added_layer.r⁻⁺ .= 0;
@@ -138,6 +166,3 @@ end
 function reflectance(sur::LambertianSurfaceScalar{FT}, μᵢ::FT, μᵣ::FT, dϕ::FT) where FT
     return sur.albedo
 end
-
-
-

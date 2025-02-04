@@ -54,11 +54,11 @@ function doubling_helper!(pol_type,
 
         # J⁺₂₁(λ) = J⁺₁₀(λ).exp(-τ(λ)/μ₀)
         @inbounds @views j₁⁺[:,1,:] .= j₀⁺[:,1,:] .* expk'
-        @inbounds @views j₁⁺_thermal[:,1,:] .= j₀⁺_thermal[:,1,:] .* expk'
+        @inbounds @views j₁⁺_thermal[:,1,:] .= j₀⁺_thermal[:,1,:]#  .* expk'
 
         # J⁻₁₂(λ)  = J⁻₀₁(λ).exp(-τ(λ)/μ₀)
         @inbounds @views j₁⁻[:,1,:] .= j₀⁻[:,1,:] .* expk'
-        @inbounds @views j₁⁻_thermal[:,1,:] .= j₀⁻_thermal[:,1,:] .* expk'
+        @inbounds @views j₁⁻_thermal[:,1,:] .= j₀⁻_thermal[:,1,:]#  .* expk'
 
         # J⁻₀₂(λ) = J⁻₀₁(λ) + T⁻⁻₀₁(λ)[I - R⁻⁺₂₁(λ)R⁺⁻₀₁(λ)]⁻¹[J⁻₁₂(λ) + R⁻⁺₂₁(λ)J⁺₁₀(λ)] (see Eqs.8 in Raman paper draft)
         j₀⁻ .= j₀⁻ + (tt⁺⁺_gp_refl ⊠ (j₁⁻ + r⁻⁺ ⊠ j₀⁺)) 
