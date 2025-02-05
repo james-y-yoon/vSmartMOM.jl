@@ -156,10 +156,13 @@ function elemental!(pol_type, SFI::Bool,
         
         # Thermal Emissions Part (JY)
         kernel! = get_thermal_emissions_SFI!(device)
+        #wo = 2640
+        #@show Array(ϖ)[wo]
+        #@show Array(layer_planck_function)[wo]
         event = kernel!(j₀⁺_thermal, j₀⁻_thermal, ϖ, dτ, qp_μN, ndoubl, pol_type.n, D, layer_planck_function, wt_μN, m, ndrange=size(j₀⁺_thermal))
         #wait(device, event)
         synchronize_if_gpu()
-
+        #@show "Elemantal", Array(added_layer.j₀⁻_thermal)[1,1,wo]
         # if (m == 0)
         #     if length(j₀⁻_thermal[1, 1, :]) > 0
         #         p = plot(10:1:2000, [j₀⁻_thermal[2, 1, :], j₀⁻[2, 1, :]], title = "m = 0, outgoing radiation (j-), Planck function / weight", labels = ["Source term" "Sun term"], xlabel = "Wavenumber (cm-1)", ylabel = "W/m2/cm-1/sr", dpi=300)
@@ -192,6 +195,7 @@ function elemental!(pol_type, SFI::Bool,
 
         # apply D matrix for SFI
         apply_D_matrix_elemental_SFI!(ndoubl, pol_type.n, j₀⁻)   
+        apply_D_matrix_elemental_SFI!(ndoubl, pol_type.n,j₀⁻_thermal)
     else
         # Note: τ is not defined here
         t⁺⁺ .= Diagonal{exp(-τ ./ qp_μN)}
@@ -318,8 +322,8 @@ end
         #     J₀⁺_thermal[i, 1, n] = absorptivity * layer_planck_function[n];            
         # end
         
-        J₀⁻_thermal[i, 1, n] = absorptivity * layer_planck_function[n] * wt_μN[i] * (1 - exp(-1 * dτ_λ[n] / qp_μN[i])) * 2;
-        J₀⁺_thermal[i, 1, n] = absorptivity * layer_planck_function[n] * wt_μN[i] * (1 - exp(-1 * dτ_λ[n] / qp_μN[i])) * 2;
+        J₀⁻_thermal[i, 1, n] = absorptivity * layer_planck_function[n]   * (1 - exp(-1 * dτ_λ[n] / qp_μN[i])) * 2 #* * wt_μN[i];
+        J₀⁺_thermal[i, 1, n] = absorptivity * layer_planck_function[n]  * (1 - exp(-1 * dτ_λ[n] / qp_μN[i])) * 2 # * wt_μN[i] ;
         # @show i,n, (1 - exp(-dτ_λ[n] / qp_μN[i]))
         
         # J₀⁻_thermal[i, 1, n] .*= 2; # To undo azimuthal weighting for solar sources in rt_run.jl
@@ -328,9 +332,9 @@ end
     end
     ### ADDED BY JY FOR THERMAL EMISSIONS ###
 
-    # if ndoubl >= 1
-    #     J₀⁻_thermal[i, 1, n] = D[i,i] * J₀⁻_thermal[i, 1, n] #D = Diagonal{1,1,-1,-1,...Nquad times}
-    # end  
+    if ndoubl >= 1
+         J₀⁻_thermal[i, 1, n] = D[i,i] * J₀⁻_thermal[i, 1, n] #D = Diagonal{1,1,-1,-1,...Nquad times}
+    end  
     nothing
 end
 

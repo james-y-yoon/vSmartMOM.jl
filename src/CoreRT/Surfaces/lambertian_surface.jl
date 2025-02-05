@@ -60,7 +60,7 @@ function create_surface_layer!(lambertian::LambertianSurfaceScalar{FT},
 
             # Thermal emissions (JY)
             wavenumber_region = collect(Iterators.flatten(wavenumber_region)) # wavenumber_region is a nested vector (JY)
-            planck_function = planck_spectrum_wn(temperature_of_surface, wavenumber_region) ./ 1000.;
+            planck_function = arr_type(planck_spectrum_wn(temperature_of_surface, wavenumber_region) ./ 1000.);
             
             zeroes = zeros(1, length(planck_function))
             iquv_iteration = vcat(planck_function', repeat(zeroes, pol_type.n - 1));
@@ -68,6 +68,7 @@ function create_surface_layer!(lambertian::LambertianSurfaceScalar{FT},
 
             weights_for_division = copy(wt_μN)
             weights_for_division[weights_for_division .== 0] .= 1
+            weights_for_division[:] .= 1
             weights_for_division = repeat(weights_for_division, 1, length(wavenumber_region))
 
             qp_μ_for_division = copy(qp_μ)
@@ -76,11 +77,11 @@ function create_surface_layer!(lambertian::LambertianSurfaceScalar{FT},
 
             # added_layer.j₀⁺[:,1,:] .+= (1 - lambertian.albedo) .* iquv_and_polarizations ./ weights_for_division;
             added_layer.j₀⁻[:,1,:] .= (1 - lambertian.albedo) .* iquv_and_polarizations .* weights_for_division ./ qp_μ_for_division .* 2;
-            p = plot(wavenumber_region, planck_function, label = "Planck", dpi = 300)
-            for i in 1:16
-                plot!(wavenumber_region, added_layer.j₀⁻[i,1,:], label = "Added Layer")
-            end
-            Plots.savefig(p, "planck_function_surface.png")
+#            p = plot(wavenumber_region, planck_function, label = "Planck", dpi = 300)
+#            for i in 1:16
+#                plot!(wavenumber_region, added_layer.j₀⁻[i,1,:], label = "Added Layer")
+#            end
+#            Plots.savefig(p, "planck_function_surface.png")
         end
         
         R_surf = R_surf * Diagonal(qp_μN.*wt_μN)

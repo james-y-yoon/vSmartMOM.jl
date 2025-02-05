@@ -144,7 +144,7 @@ function rt_run(RS_type::AbstractRamanType,
         @showprogress 1 "Looping over layers ..." for iz = 1:Nz  # Count from TOA to BOA
 
             temperature_of_layer = temp_profile[iz];
-            
+            #@show iz, temperature_of_layer
             # Construct the atmospheric layer
             # From Rayleigh and aerosol τ, ϖ, compute overall layer τ, ϖ
             # Suniti: modified to return fscattRayl as the last element of  computed_atmosphere_properties
@@ -167,6 +167,8 @@ function rt_run(RS_type::AbstractRamanType,
                         I_static, 
                         model.params.architecture, 
                         qp_μN, iz, temperature_of_layer, wavenumber_region) 
+            #@show "Kernel", Array(added_layer.j₀⁻)[1,1,2650]
+            #@show "Kernel", Array(composite_layer.J₀⁻)[1,1,2650]
         end 
         
         temperature_of_surface = temp_profile[end];
@@ -183,8 +185,8 @@ function rt_run(RS_type::AbstractRamanType,
                             model.params.architecture,
                             );
         
-        @show composite_layer.J₀⁺[iμ₀,1,10:end]
-        @show added_layer_surface.j₀⁺[iμ₀,1,10:end]
+        #@show composite_layer.J₀⁺[iμ₀,1,10:end]
+        #@show added_layer_surface.j₀⁺[iμ₀,1,10:end]
         # One last interaction with surface:
         @timeit "interaction" interaction!(RS_type,
                                     #bandSpecLim,
@@ -193,6 +195,8 @@ function rt_run(RS_type::AbstractRamanType,
                                     composite_layer, 
                                     added_layer_surface, 
                                     I_static)
+        #@show "AfterSurface", Array(added_layer.j₀⁻)[1,1,2650]
+        #@show "AfterSurface", Array(composite_layer.J₀⁻)[1,1,2650]
        #@show composite_layer.J₀⁺[iμ₀,1,1:3]
         hdr_J₀⁻ = similar(composite_layer.J₀⁻)
         # One last interaction with surface:
@@ -204,7 +208,7 @@ function rt_run(RS_type::AbstractRamanType,
                                     added_layer_surface, 
                                     m, pol_type, quad_points,
                                     hdr_J₀⁻, bhr_uw, bhr_dw)
-        
+       #@show "AfterSurface2", Array(composite_layer.J₀⁻)[:,1,2650]
         # Postprocess and weight according to vza
         @timeit "Postprocessing VZA" postprocessing_vza!(RS_type, 
                             iμ₀, pol_type, 
@@ -222,7 +226,7 @@ function rt_run(RS_type::AbstractRamanType,
             vza, qp_μ, m, vaz, μ₀, 
             weight, nSpec, 
             hdr)
-    @show 
+    
             
     end
 

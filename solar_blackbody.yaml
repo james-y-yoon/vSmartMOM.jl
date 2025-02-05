@@ -14,7 +14,7 @@ radiative_transfer:
   # Polarization type (Stokes_I, Stokes_IQ, Stokes_IQU, Stokes_IQUV)
   polarization_type:  Stokes_I()
   # Maximum m (number of Fourier moments to loop over)
-  max_m:              5
+  max_m:              1
   # Exclusion angle for forward peak in fitting procedure (degrees)
   Δ_angle:            2.0
   # Trunction length for legendre terms
@@ -47,7 +47,7 @@ geometry:
 atmospheric_profile: 
   # Temperature Profile (TOA to BOA, in K)
   # Full-levels, specified at layer centers
-  T: [5772]
+  T: [280]
   # Pressure Profile (TOA to BOA at each boundary, in hPa)
   # Half-levels, specified at layer boundaries
   p: [10, 1000]
@@ -57,22 +57,20 @@ atmospheric_profile:
 # =================================================================
 # Absorption-Related Parameters (Optional)
 # =================================================================
-# absorption:
-#   # List of molecules per spectral band
-#   molecules:
-#     - [CO2, O2] # Molecules in Band #1
-#   # VMR profiles can either be real-valued numbers, 
-#   # or an array of nodal points from TOA to BOA, interpolated in pressure space
-#   vmr: 
-#     CO2:  [0.000385, 0.000395]
-#     O2:   0.21
-#     H2O:  0.01
-#   # Broadening function (Doppler/Lorentz/Voigt)
-#   broadening:         Voigt()
-#   # Complex error function for Voigt calculations
-#   CEF:                HumlicekWeidemann32SDErrorFunction()
-#   # Wing cutoff (cm⁻¹)
-#   wing_cutoff:        40
+ absorption:
+   # List of molecules per spectral band
+   molecules:
+     - [CO2] # Molecules in Band #1
+   # VMR profiles can either be real-valued numbers, 
+   # or an array of nodal points from TOA to BOA, interpolated in pressure space
+   vmr: 
+     CO2:  [0.000385, 0.000395]
+   # Broadening function (Doppler/Lorentz/Voigt)
+   broadening:         Voigt()
+   # Complex error function for Voigt calculations
+   CEF:                HumlicekWeidemann32SDErrorFunction()
+   # Wing cutoff (cm⁻¹)
+   wing_cutoff:        40
 
 # =================================================================
 # Scattering-Related Parameters (Optional)

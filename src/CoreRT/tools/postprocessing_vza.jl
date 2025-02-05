@@ -19,6 +19,7 @@ function postprocessing_vza!(RS_type::noRS, iμ₀, pol_type,
     J₀⁺ = Array(composite_layer.J₀⁺);
     J₀⁻ = Array(composite_layer.J₀⁻);
     
+    #@show "Post", J₀⁻[1,1, 2650]
     minUp = 0.0;
     maxUp = 0.0;
     # Loop over all viewing zenith angles
@@ -38,6 +39,9 @@ function postprocessing_vza!(RS_type::noRS, iμ₀, pol_type,
             
             if SFI
                 dR  = bigCS * J₀⁻[istart:iend,1, s]
+                if 2600 > s >2500 
+                #@show s, dR, bigCS, J₀⁻[istart:iend,1, s], J₀⁻[istart:iend,1, 2650], istart:iend
+                end
                 dRR = dR ./ R_SFI[i,:,s]
                 if dRR[1] < minUp 
                     minUp = dRR[1]
@@ -48,6 +52,7 @@ function postprocessing_vza!(RS_type::noRS, iμ₀, pol_type,
                 R_SFI[i,:,s] .+= dR;
                 T_SFI[i,:,s] .+= bigCS * J₀⁺[istart:iend,1, s];
             else
+                @show "No SFI"
                 R[i,:,s] .+= bigCS * (R⁻⁺[istart:iend, istart0:iend0, s] / μ₀) * pol_type.I₀;
                 T[i,:,s] .+= bigCS * (T⁺⁺[istart:iend, istart0:iend0, s] / μ₀) * pol_type.I₀;
             end

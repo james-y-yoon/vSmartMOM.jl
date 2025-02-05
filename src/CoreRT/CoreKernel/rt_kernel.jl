@@ -184,6 +184,8 @@ function rt_kernel!(RS_type::noRS{FT},
     ### ADDED BY JY ###
     wavenumber_region = collect(Iterators.flatten(wavenumber_region)) # wavenumber_region is a nested vector (JY)
     planck_function = planck_spectrum_wn(temperature_of_layer, wavenumber_region) ./ 1000.; # Convert from mW/m2/str/cm-1 to W/m2/str/cm-1
+    arr_type = array_type(architecture)
+    planck_function = arr_type(planck_function)
     ### ADDED BY JY ###
 
     @unpack qp_μ, μ₀ = quad_points
@@ -192,9 +194,6 @@ function rt_kernel!(RS_type::noRS{FT},
     # @show ndoubl
     scatter = true # edit later
 
-    # @show ϖ[150]
-    # @show τ[150]
-    
     dτ, ndoubl, expk = init_layer(computed_layer_properties, quad_points, pol_type, architecture)
 
     # If there is scattering, perform the elemental and doubling steps
@@ -206,12 +205,13 @@ function rt_kernel!(RS_type::noRS{FT},
                                 computed_layer_properties, 
                                 m, ndoubl, scatter, quad_points,  
                                 added_layer,  architecture, planck_function)
-
+        #@show m, "Elemental", Array(added_layer.j₀⁻_thermal)[1,1,2650]
         #println("Elemental done...")
         @timeit "doubling"   doubling!(pol_type, SFI, 
                                 expk, ndoubl, 
                                 added_layer,
                                 I_static, architecture)
+        #@show "Doubling", Array(added_layer.j₀⁻_thermal)[1,1,2650]
         #@show added_layer.r⁻⁺[1:2,1,1], added_layer.r⁺⁻[1:2,1,1],added_layer.t⁺⁺[1:2,1,1], added_layer.t⁻⁻[1:2,1,1] 
         #@show dτ, ndoubl, expk
         #println("Doubling done...")
@@ -234,9 +234,9 @@ function rt_kernel!(RS_type::noRS{FT},
     added_layer.j₀⁻[:] .= 0;
     added_layer.j₀⁺[:] .= 0;
 
-    added_layer.j₀⁻ .+= added_layer.j₀⁻_thermal
-    added_layer.j₀⁺ .+= added_layer.j₀⁺_thermal
-
+    added_layer.j₀⁻ .= added_layer.j₀⁻_thermal
+    added_layer.j₀⁺ .= added_layer.j₀⁺_thermal
+    #@show "Doubling2", Array(added_layer.j₀⁻)[1,1,2650]
     # added_layer.j₀⁻_thermal[:] .= 0;
     # added_layer.j₀⁺_thermal[:] .= 0;
 
