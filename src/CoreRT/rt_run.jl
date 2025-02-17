@@ -238,7 +238,7 @@ function rt_run(RS_type::AbstractRamanType,
     #if RAMI
     #@show size(hdr), size(bhr_dw)
     #hdr = hdr[:,1,:] ./ bhr_dw[1,:]
-    return SFI ? (R_SFI, T_SFI, ieR_SFI, ieT_SFI, hdr, bhr_uw[1,:], bhr_dw[1,:]) : (R, T)
+    return SFI ? (R_SFI, T_SFI, ieR_SFI, ieT_SFI, hdr, bhr_uw[1,:], bhr_dw[1,:], Array(composite_layer.J₀⁻)) : (R, T)
     #else
     #return SFI ? (R_SFI, T_SFI, ieR_SFI, ieT_SFI) : (R, T)
     #end

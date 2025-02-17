@@ -32,10 +32,10 @@ geometry:
   # Solar zenith angle (degrees)
   sza:                60
   # Viewing zenith angles (degrees)
-  vza:                [0.0]
+  vza:                [80,60, 45, 30, 15, 0, 15, 30, 45, 60,80.0]
   # [60, 45, 30, 15, 0, 15, 30, 45, 60]
   # Viewing azimuth angles (degrees)
-  vaz:                [0]
+  vaz:                [0,0,0,0,0,0,0,0,0,0,0]
   # [180, 180, 180, 180, 0, 0, 0, 0, 0]
   # Observation altitude (Pa)
   obs_alt:            1000.0

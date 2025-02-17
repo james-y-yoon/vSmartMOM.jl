@@ -323,7 +323,7 @@ end
         # end
         
         J₀⁻_thermal[i, 1, n] = absorptivity * layer_planck_function[n]   * (1 - exp(-1 * dτ_λ[n] / qp_μN[i])) * 2 #* * wt_μN[i];
-        J₀⁺_thermal[i, 1, n] = absorptivity * layer_planck_function[n]  * (1 - exp(-1 * dτ_λ[n] / qp_μN[i])) * 2 # * wt_μN[i] ;
+        J₀⁺_thermal[i, 1, n] = absorptivity * layer_planck_function[n]   * (1 - exp(-1 * dτ_λ[n] / qp_μN[i])) * 2 # * wt_μN[i] ;
         # @show i,n, (1 - exp(-dτ_λ[n] / qp_μN[i]))
         
         # J₀⁻_thermal[i, 1, n] .*= 2; # To undo azimuthal weighting for solar sources in rt_run.jl

@@ -66,17 +66,13 @@ function create_surface_layer!(lambertian::LambertianSurfaceScalar{FT},
             iquv_iteration = vcat(planck_function', repeat(zeroes, pol_type.n - 1));
             iquv_and_polarizations = repeat(iquv_iteration, Nquad)
 
-            weights_for_division = copy(wt_μN)
-            weights_for_division[weights_for_division .== 0] .= 1
-            weights_for_division[:] .= 1
-            weights_for_division = repeat(weights_for_division, 1, length(wavenumber_region))
-
-            qp_μ_for_division = copy(qp_μ)
-            qp_μ_for_division[qp_μ_for_division .== 0] .= 1
-            qp_μ_for_division = repeat(qp_μ_for_division, 1, length(wavenumber_region))
-
+            
+            @show planck_function
             # added_layer.j₀⁺[:,1,:] .+= (1 - lambertian.albedo) .* iquv_and_polarizations ./ weights_for_division;
-            added_layer.j₀⁻[:,1,:] .= (1 - lambertian.albedo) .* iquv_and_polarizations .* weights_for_division ./ qp_μ_for_division .* 2;
+            added_layer.j₀⁻[:,1,:] .= 2(1 - lambertian.albedo) .* iquv_and_polarizations #.* weights_for_division ./ qp_μ_for_division .* 2;
+            
+            #@show weights_for_division 
+            #@show qp_μ_for_division
 #            p = plot(wavenumber_region, planck_function, label = "Planck", dpi = 300)
 #            for i in 1:16
 #                plot!(wavenumber_region, added_layer.j₀⁻[i,1,:], label = "Added Layer")
