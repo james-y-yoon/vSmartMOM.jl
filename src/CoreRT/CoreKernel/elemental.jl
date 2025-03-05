@@ -154,41 +154,12 @@ function elemental!(pol_type, SFI::Bool,
         #wait(device, event)
         synchronize_if_gpu()
         
-        # Thermal Emissions Part (JY)
+        # Calculate thermal emissions (JY)
+        # We separate thermal emissions and the solar term because of an expk term in doubling that should only be applied to solar radiation 
+        # We then recombine the source terms right before interaction.
         kernel! = get_thermal_emissions_SFI!(device)
-        #wo = 2640
-        #@show Array(ϖ)[wo]
-        #@show Array(layer_planck_function)[wo]
         event = kernel!(j₀⁺_thermal, j₀⁻_thermal, ϖ, dτ, qp_μN, ndoubl, pol_type.n, D, layer_planck_function, wt_μN, m, ndrange=size(j₀⁺_thermal))
-        #wait(device, event)
         synchronize_if_gpu()
-        #@show "Elemantal", Array(added_layer.j₀⁻_thermal)[1,1,wo]
-        # if (m == 0)
-        #     if length(j₀⁻_thermal[1, 1, :]) > 0
-        #         p = plot(10:1:2000, [j₀⁻_thermal[2, 1, :], j₀⁻[2, 1, :]], title = "m = 0, outgoing radiation (j-), Planck function / weight", labels = ["Source term" "Sun term"], xlabel = "Wavenumber (cm-1)", ylabel = "W/m2/cm-1/sr", dpi=300)
-        #        Plots.savefig(p, "J_source_terms.png")
-        #     end
-        #  end
-
-        #  if (m == 1)
-        #     if length(j₀⁻_thermal[1, 1, :]) > 0
-        #         p = plot(10:1:2000, [j₀⁻_thermal[2, 1, :], j₀⁻[2, 1, :]], title = "m = 0, outgoing radiation (j-), Planck function / weight", labels = ["Source term" "Sun term"], xlabel = "Wavenumber (cm-1)", ylabel = "W/m2/cm-1/sr", dpi=300)
-        #        Plots.savefig(p, "J_source_terms_m1.png")
-        #     end
-        #  end
-
-        #  if (m == 2)
-        #     if length(j₀⁻_thermal[1, 1, :]) > 0
-        #      p = plot(10:1:2000, [j₀⁻_thermal[2, 1, :], j₀⁻[2, 1, :]], title = "m = 0, outgoing radiation (j-), Planck function / weight", labels = ["Source term" "Sun term"], xlabel = "Wavenumber (cm-1)", ylabel = "W/m2/cm-1/sr", dpi=300)
-        #        Plots.savefig(p, "J_source_terms_m2.png")
-        #     end
-        #  end
-
-        # p = plot(10:10:4000, [j₀⁻[4, 1, :]], title = "Solar term", labels = ["Sun term"], xlabel = "Wavenumber (cm-1)", ylabel = "W/m2/cm-1/sr", dpi=300)
-        # Plots.savefig(p, "solar_term_upwelling.png")
-
-        # p = plot(10:10:4000, [j₀⁺[4, 1, :]], title = "Solar term", labels = ["Sun term"], xlabel = "Wavenumber (cm-1)", ylabel = "W/m2/cm-1/sr", dpi=300)
-        # Plots.savefig(p, "solar_term_downwelling.png")
 
         # Apply D Matrix
         apply_D_matrix_elemental!(ndoubl, pol_type.n, r⁻⁺, t⁺⁺, r⁺⁻, t⁻⁻)
@@ -259,7 +230,7 @@ end
     
     J₀⁺[i, 1, n]=0
     J₀⁻[i, 1, n]=0
-    
+
     n2=1
 
     if size(Z⁻⁺,3)>1
@@ -301,36 +272,23 @@ end
 
 @kernel function get_thermal_emissions_SFI!(J₀⁺_thermal, J₀⁻_thermal, ϖ, dτ_λ, qp_μN, ndoubl, nStokes, D, layer_planck_function, wt_μN, m)
 
-    i, _, n = @index(Global, NTuple) ##Suniti: What are Global and Ntuple?    
+    i, _, n = @index(Global, NTuple)    
 
     J₀⁺_thermal[i, 1, n] = 0
     J₀⁻_thermal[i, 1, n] = 0
 
-    # transmittance = ℯ^(-1 * dτ_λ[n])
-    # absorbed_or_scattered = 1 - transmittance;
-    # scattered = ϖ[n] * absorbed_or_scattered;
-    # absorptivity = absorbed_or_scattered - scattered;
+    ######## Thermal Emissions for each layer (JY)
     absorptivity = (1 - ϖ[n]);
     
-    ### ADDED BY JY FOR THERMAL EMISSIONS ###
-    if (m == 0) && (((i-1) % nStokes) == 0)
-        # if (wt_μN[i] != 0)
-        #     J₀⁻_thermal[i, 1, n] = absorptivity * layer_planck_function[n] .* wt_μN[i];
-        #     J₀⁺_thermal[i, 1, n] = absorptivity * layer_planck_function[n] .* wt_μN[i];
-        # else
-        #     J₀⁻_thermal[i, 1, n] = absorptivity * layer_planck_function[n];
-        #     J₀⁺_thermal[i, 1, n] = absorptivity * layer_planck_function[n];            
-        # end
-        
-        J₀⁻_thermal[i, 1, n] = absorptivity * layer_planck_function[n]   * (1 - exp(-1 * dτ_λ[n] / qp_μN[i])) * 2 #* * wt_μN[i];
-        J₀⁺_thermal[i, 1, n] = absorptivity * layer_planck_function[n]   * (1 - exp(-1 * dτ_λ[n] / qp_μN[i])) * 2 # * wt_μN[i] ;
-        # @show i,n, (1 - exp(-dτ_λ[n] / qp_μN[i]))
-        
-        # J₀⁻_thermal[i, 1, n] .*= 2; # To undo azimuthal weighting for solar sources in rt_run.jl
-        # J₀⁺_thermal[i, 1, n] .*= 2; # To undo azimuthal weighting for solar sources in rt_run.jl
+    if (m == 0) && (((i-1) % nStokes) == 0) # If first Fourier moment and unpolarized: 
 
+        # The exponential term is to account for attenuation of light through the layer itself
+        # The factor of 2 undos azimuthal weighting for solar sources in rt_run.jl
+        J₀⁻_thermal[i, 1, n] = absorptivity * layer_planck_function[n] * (1 - exp(-1 * dτ_λ[n] / qp_μN[i])) * 2;
+        J₀⁺_thermal[i, 1, n] = absorptivity * layer_planck_function[n] * (1 - exp(-1 * dτ_λ[n] / qp_μN[i])) * 2;
+    
     end
-    ### ADDED BY JY FOR THERMAL EMISSIONS ###
+    ######## End Thermal Emissions for each layer (JY)
 
     if ndoubl >= 1
          J₀⁻_thermal[i, 1, n] = D[i,i] * J₀⁻_thermal[i, 1, n] #D = Diagonal{1,1,-1,-1,...Nquad times}

@@ -180,12 +180,14 @@ function rt_kernel!(RS_type::noRS{FT},
                     architecture, 
                     qp_μN, iz, temperature_of_layer, wavenumber_region) where {FT,M}
     #@show array_type(architecture)
-    
+
     ### ADDED BY JY ###
-    wavenumber_region = collect(Iterators.flatten(wavenumber_region)) # wavenumber_region is a nested vector (JY)
+    wavenumber_region = collect(Iterators.flatten(wavenumber_region)) # Wavenumber_region is a nested vector (JY)
     planck_function = planck_spectrum_wn(temperature_of_layer, wavenumber_region) ./ 1000.; # Convert from mW/m2/str/cm-1 to W/m2/str/cm-1
     arr_type = array_type(architecture)
     planck_function = arr_type(planck_function)
+
+    solar_source = false;
     ### ADDED BY JY ###
 
     @unpack qp_μ, μ₀ = quad_points
@@ -229,16 +231,15 @@ function rt_kernel!(RS_type::noRS{FT},
         end
     end
 
-    # @assert !any(isnan.(added_layer.t⁺⁺))
-
-    added_layer.j₀⁻[:] .= 0;
-    added_layer.j₀⁺[:] .= 0;
-
-    added_layer.j₀⁻ .= added_layer.j₀⁻_thermal
-    added_layer.j₀⁺ .= added_layer.j₀⁺_thermal
-    #@show "Doubling2", Array(added_layer.j₀⁻)[1,1,2650]
-    # added_layer.j₀⁻_thermal[:] .= 0;
-    # added_layer.j₀⁺_thermal[:] .= 0;
+    # Set source term to 0 if there's no solar source (JY)
+    if solar_source == false
+        added_layer.j₀⁻[:] .= 0;
+        added_layer.j₀⁺[:] .= 0;
+    end
+    
+    # Then add the thermal term to the source term (JY)
+    added_layer.j₀⁻ .+= added_layer.j₀⁻_thermal
+    added_layer.j₀⁺ .+= added_layer.j₀⁺_thermal
 
     # If this TOA, just copy the added layer into the composite layer
     if (iz == 1)

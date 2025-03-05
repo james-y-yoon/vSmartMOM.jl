@@ -58,26 +58,21 @@ function create_surface_layer!(lambertian::LambertianSurfaceScalar{FT},
             added_layer.j₀⁺[:,1,:] .= I₀_NquadN .* exp.(-τ_sum/μ₀)';
             added_layer.j₀⁻[:,1,:] .= μ₀*(R_surf*I₀_NquadN) .* exp.(-τ_sum/μ₀)';
 
-            # Thermal emissions (JY)
-            wavenumber_region = collect(Iterators.flatten(wavenumber_region)) # wavenumber_region is a nested vector (JY)
-            planck_function = arr_type(planck_spectrum_wn(temperature_of_surface, wavenumber_region) ./ 1000.);
-            
-            zeroes = zeros(1, length(planck_function))
-            iquv_iteration = vcat(planck_function', repeat(zeroes, pol_type.n - 1));
-            iquv_and_polarizations = repeat(iquv_iteration, Nquad)
+            ############ Thermal Emissions From Surface (JY) 
+            wavenumber_region = collect(Iterators.flatten(wavenumber_region)); # Wavenumber_region is a nested vector, so we need to flatten it first
+            planck_function = arr_type(planck_spectrum_wn(temperature_of_surface, wavenumber_region) ./ 1000.); # Divide by 1000 to convert mW to W
+                        
+            # The following code creates vectors [B(T), 0, 0, 0], ... repeated for every quadrature point
+            zeroes_along_wavenumber_domain = zeros(1, length(planck_function));
+            planck_function_polarizations = vcat(planck_function', repeat(zeroes_along_wavenumber_domain, pol_type.n - 1)); # Ensures that the Planck function is isotropic (no polarization)
+            planck_function_full_quadrature = repeat(planck_function_polarizations, Nquad); # Repeat for all quadrature points
 
-            
-            @show planck_function
-            # added_layer.j₀⁺[:,1,:] .+= (1 - lambertian.albedo) .* iquv_and_polarizations ./ weights_for_division;
-            added_layer.j₀⁻[:,1,:] .= 2(1 - lambertian.albedo) .* iquv_and_polarizations #.* weights_for_division ./ qp_μ_for_division .* 2;
-            
-            #@show weights_for_division 
-            #@show qp_μ_for_division
-#            p = plot(wavenumber_region, planck_function, label = "Planck", dpi = 300)
-#            for i in 1:16
-#                plot!(wavenumber_region, added_layer.j₀⁻[i,1,:], label = "Added Layer")
-#            end
-#            Plots.savefig(p, "planck_function_surface.png")
+            # Calculate the radiative flux, which is (1 - w) * B(T)
+            # Note that the factor of 2 is to undo the azimuthal weighting for m = 0 (weight = m == 0 ? FT(0.5) : FT(1.0)) in rt_run.jl
+            added_layer.j₀⁻[:,1,:] .= 2(1 - lambertian.albedo) .* planck_function_full_quadrature;
+            # added_layer.j₀⁺[:,1,:] .= 2 * (1 - lambertian.albedo) .* planck_function_full_quadrature;
+            ############ End Thermal Emissions From Surface (JY) 
+
         end
         
         R_surf = R_surf * Diagonal(qp_μN.*wt_μN)

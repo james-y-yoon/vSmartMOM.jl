@@ -33,11 +33,11 @@ function doubling_helper!(pol_type,
     #temp = similar(t⁺⁺)
     # Dummy for source 
     j₁⁺ = similar(j₀⁺)
-    j₁⁺_thermal = similar(j₀⁺_thermal)
+    j₁⁺_thermal = similar(j₀⁺_thermal) # Repeat for thermal (JY)
 
     # Dummy for J
     j₁⁻  = similar(j₀⁻)
-    j₁⁻_thermal = similar(j₀⁻_thermal)
+    j₁⁻_thermal = similar(j₀⁻_thermal) # Repeat for thermal (JY)
 
     #temp = similar(t⁺⁺)
     # Pointers to avoid memory allocation in CUBLAS routines
@@ -54,19 +54,19 @@ function doubling_helper!(pol_type,
 
         # J⁺₂₁(λ) = J⁺₁₀(λ).exp(-τ(λ)/μ₀)
         @inbounds @views j₁⁺[:,1,:] .= j₀⁺[:,1,:] .* expk'
-        @inbounds @views j₁⁺_thermal[:,1,:] .= j₀⁺_thermal[:,1,:]#  .* expk'
+        @inbounds @views j₁⁺_thermal[:,1,:] .= j₀⁺_thermal[:,1,:] # No expk multiplication for thermal (JY)
 
         # J⁻₁₂(λ)  = J⁻₀₁(λ).exp(-τ(λ)/μ₀)
         @inbounds @views j₁⁻[:,1,:] .= j₀⁻[:,1,:] .* expk'
-        @inbounds @views j₁⁻_thermal[:,1,:] .= j₀⁻_thermal[:,1,:]#  .* expk'
+        @inbounds @views j₁⁻_thermal[:,1,:] .= j₀⁻_thermal[:,1,:] # No expk multiplication for thermal (JY)
 
         # J⁻₀₂(λ) = J⁻₀₁(λ) + T⁻⁻₀₁(λ)[I - R⁻⁺₂₁(λ)R⁺⁻₀₁(λ)]⁻¹[J⁻₁₂(λ) + R⁻⁺₂₁(λ)J⁺₁₀(λ)] (see Eqs.8 in Raman paper draft)
         j₀⁻ .= j₀⁻ + (tt⁺⁺_gp_refl ⊠ (j₁⁻ + r⁻⁺ ⊠ j₀⁺)) 
-        j₀⁻_thermal .= j₀⁻_thermal + (tt⁺⁺_gp_refl ⊠ (j₁⁻_thermal + r⁻⁺ ⊠ j₀⁺_thermal)) 
+        j₀⁻_thermal .= j₀⁻_thermal + (tt⁺⁺_gp_refl ⊠ (j₁⁻_thermal + r⁻⁺ ⊠ j₀⁺_thermal))  # Repeat for thermal (JY)
 
         # J⁺₂₀(λ) = J⁺₂₁(λ) + T⁺⁺₂₁(λ)[I - R⁺⁻₀₁(λ)R⁻⁺₂₁(λ)]⁻¹[J⁺₁₀(λ) + R⁺⁻₀₁(λ)J⁻₁₂(λ)] (see Eqs.8 in Raman paper draft)
         j₀⁺  .= j₁⁺ + (tt⁺⁺_gp_refl ⊠ (j₀⁺ + r⁻⁺ ⊠ j₁⁻))
-        j₀⁺_thermal  .= j₁⁺_thermal + (tt⁺⁺_gp_refl ⊠ (j₀⁺_thermal + r⁻⁺ ⊠ j₁⁻_thermal))
+        j₀⁺_thermal  .= j₁⁺_thermal + (tt⁺⁺_gp_refl ⊠ (j₀⁺_thermal + r⁻⁺ ⊠ j₁⁻_thermal)) # Repeat for thermal (JY)
 
         expk .= expk.^2
     
