@@ -19,12 +19,13 @@
 </div>
 
 <div align="left">
+  
 ## Version
 This version contains thermal emissions (Planck function fluxes from every layer and the surface) and isoprene as another absorption species. 
 
 Isoprene was added via pseudo-line-lists obtained from [this database](https://mark4sun.jpl.nasa.gov/pseudo.html). More information about the isoprene pseudo-line-list can be found [here](https://mark4sun.jpl.nasa.gov/data/spec/Pseudo/Isoprene_PLL-compressed.pdf). 
 
-### How to add additional species with pseudo-line-lists
+## How to add additional species with pseudo-line-lists
 
 To add additional species that are not in the HITRAN line list database, you must create functions (similar to the isoprene functions) in:
 
@@ -36,8 +37,6 @@ To add additional species that are not in the HITRAN line list database, you mus
 In addition to new functions in the above files, you will need to add your molecule to the code within **CoreRT/tools/model_from_parameters.jl**.
 - if ( params.absorption_params.molecules[i_band][molec_i] == your_new_molecule ) run your_newcompute_absorption_profile_func().
 
-</div>
-
 ## Acknowledgements
 
 This project is being developed in the Christian Frankenberg and Paul Wennberg labs at Caltech and is largely based on papers and ideas by Suniti Sanghavi from NASA/JPL, with support from the Schmidt Academy for Software Engineering (SASE).
@@ -45,3 +44,5 @@ This project is being developed in the Christian Frankenberg and Paul Wennberg l
 ## Copyright Notice
 
 Apache 2.0 License; Copyright 2022, by the California Institute of Technology. United States Government Sponsorship acknowledged.
+</div>
+
