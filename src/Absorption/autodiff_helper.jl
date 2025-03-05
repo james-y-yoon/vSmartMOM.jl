@@ -52,6 +52,14 @@ function absorption_cross_section(model::AbstractCrossSectionModel,          # M
 
 end
 
+
+"""
+    $(FUNCTIONNAME)(model::HitranModel, grid::AbstractRange{<:Real}, pressure::Real, temperature::Real; wavelength_flag::Bool=false)
+
+Calculate absorption cross-section at the given pressure, temperature, and grid of wavelengths for isoprene
+(or wavenumbers), and have the option to perform auto-differentiation. 
+You would need to create this function for any other molecules you want to include from a PLL.
+"""
 function absorption_cross_section_isoprene(model::AbstractCrossSectionModel,          # Model to use 
                                   grid::Union{AbstractRange{<:Real}, AbstractArray}, # Wavelength [nm] or wavenumber [cm-1] grid 
                                   pressure::Real,              # actual pressure [hPa]

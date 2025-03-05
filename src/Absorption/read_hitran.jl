@@ -68,14 +68,26 @@ function read_hitran(filepath::String; mol::Int=-1, iso::Int=-1,
 
 end
 
+"""
+    read_hitran_isoprene(filepath::String, mol::Int=-1, iso::Int=-1, ν_min::Real=0, ν_max::Real=Inf)
+
+Read/parse a HITRAN pseudo-line-list data file corresponding to isoprene and return the data in [`HitranTable`](@ref) format. 
+This function can be adapted to any pseudo-line-list from the database.
+
+The HITRAN pseudo-line-list is from https://mark4sun.jpl.nasa.gov/data/spec/Pseudo/Isoprene_PLL-compressed.pdf
+https://mark4sun.jpl.nasa.gov/pseudo.html.
+
+"""
 function read_hitran_isoprene(filepath::String; ν_min::Real=0, ν_max::Real=Inf, min_strength::Real=0)
 
     FT = eltype(AbstractFloat(ν_min))
 	
+    # Variables present in the isoprene PLL. 
+    # Note that this is only a subset of the variable names in a regular HITRAN list!
 	varNames = ["molec_id", "local_iso_id", "nu", "sw", "a", "gamma_air",
 				"gamma_self", "elower", "n_air", "delta_air", "metadata"]
 
-	varLengths = [2, 1, 12, 10, 10, 5, 5, 10, 4, 8, 32]
+	varLengths = [2, 1, 12, 10, 10, 5, 5, 10, 4, 8, 32] # Lengths of each field -- may need to change for other molecules
 	varTypes = [Int64, Int64, FT, FT, FT, FT, FT, FT, FT, FT, String]
 	
 	# Take the line parameters' lengths and assemble an index-ranges list
@@ -102,8 +114,8 @@ function read_hitran_isoprene(filepath::String; ν_min::Real=0, ν_max::Real=Inf
         cols = [[rows[i][j] for i in 1:length(rows)] for j in 1:length(varNames)]
         length(cols[1]) == 0 ? throw(HitranEmptyError()) : nothing
 		
-		placeholder_str = repeat(["#"], length(rows))
-		placeholder_flt = repeat([-1.0], length(rows))
+		placeholder_str = repeat(["#"], length(rows)) # Sets placeholders for variables that are not in PLL, strings
+		placeholder_flt = repeat([-1.0], length(rows)) # Sets placeholders for variables that are not in PLL, floats
 		
 		return HitranTable(mol=cols[1], iso=cols[2], νᵢ=cols[3], Sᵢ=cols[4], Aᵢ=cols[5], γ_air=cols[6], γ_self=cols[7], E″=cols[8], n_air=cols[9], δ_air=cols[10], global_upper_quanta=placeholder_str, global_lower_quanta=placeholder_str, local_upper_quanta=placeholder_str, local_lower_quanta=placeholder_str, ierr=placeholder_str, iref=placeholder_str, line_mixing_flag=placeholder_str, g′=placeholder_flt, g″= placeholder_flt)
 

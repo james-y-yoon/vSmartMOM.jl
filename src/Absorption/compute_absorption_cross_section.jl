@@ -131,7 +131,9 @@ end
 
 """
 Given the hitran data and necessary parameters, calculate an absorption cross-section at the
-given pressure, temperature, and grid of wavenumbers (or wavelengths)
+given pressure, temperature, and grid of wavenumbers (or wavelengths) for isoprene. 
+Can be adapted to other molecules with pseudo-line-lists from https://mark4sun.jpl.nasa.gov/pseudo.html.
+This function does Voigt broadening but does not take into account total internal partition sums due to lack of data for isoprene. 
 """
 function compute_absorption_cross_section_isoprene(
                 # Required
@@ -145,7 +147,7 @@ function compute_absorption_cross_section_isoprene(
                 wavelength_flag::Bool=false  # Use wavelength in nm (true) or wavenumber cm-1 units (false)    
                 )
     
-    molar_mass = 68.12
+    molar_mass = 68.12 # Molar mass of isoprene; CHANGE for other molecules.
     @unpack hitran, broadening, wing_cutoff, vmr, CEF, architecture = model
 
     # Notify user of wavelength grid
@@ -212,12 +214,13 @@ function compute_absorption_cross_section_isoprene(
             # Apply line intensity temperature corrections
             S = hitran.Sᵢ[j]
 
-            # if hitran.E″[j] != -1
-            #     qoft!(hitran.mol[j], hitran.iso[j], temperature, t_ref, rate)
-            #     S = S * rate[1] *
-            #             exp(c₂ * hitran.E″[j] * (1 / t_ref - 1 / temperature)) *
-            #             (1 - exp(-c₂ * hitran.νᵢ[j] / temperature)) / (1 - exp(-c₂ * hitran.νᵢ[j] / t_ref));
-            # end
+            # Could not implement partition functions due to lack of datasets
+            ##  if hitran.E″[j] != -1
+            ##      qoft!(hitran.mol[j], hitran.iso[j], temperature, t_ref, rate)
+            ##      S = S * rate[1] *
+            ##              exp(c₂ * hitran.E″[j] * (1 / t_ref - 1 / temperature)) *
+            ##              (1 - exp(-c₂ * hitran.νᵢ[j] / temperature)) / (1 - exp(-c₂ * hitran.νᵢ[j] / t_ref));
+            ##  end
 
             if length(grid)>1
                 # Calculate index range that this ν impacts
