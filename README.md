@@ -16,8 +16,9 @@
   [![](https://img.shields.io/github/license/RemoteSensingTools/vSmartMOM.jl)](https://github.com/RemoteSensingTools/vSmartMOM.jl/blob/master/LICENSE)
   [![DOI](https://joss.theoj.org/papers/10.21105/joss.04575/status.svg)](https://doi.org/10.21105/joss.04575)
   [![](https://img.shields.io/github/commit-activity/y/RemoteSensingTools/vSmartMOM.jl)](https://github.com/RemoteSensingTools/vSmartMOM.jl/commits/master)
+</div>
 
-
+<div align="left">
 ## Version
 This version contains thermal emissions (Planck function fluxes from every layer and the surface) and isoprene as another absorption species. 
 
@@ -35,6 +36,7 @@ To add additional species that are not in the HITRAN line list database, you mus
 In addition to new functions in the above files, you will need to add your molecule to the code within **CoreRT/tools/model_from_parameters.jl**.
 - if ( params.absorption_params.molecules[i_band][molec_i] == your_new_molecule ) run your_newcompute_absorption_profile_func().
 
+</div>
 
 ## Acknowledgements
 
