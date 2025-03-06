@@ -71,7 +71,7 @@ function model_from_parameters(params::vSmartMOM_Parameters)
                 # JY: Added isoprene
                 if ( params.absorption_params.molecules[i_band][molec_i] == "ISOP" )
                     print(vSmartMOM.Absorption.read_hitran_isoprene)
-                    hitran_data = vSmartMOM.Absorption.read_hitran_isoprene("/Users/jamesyoon/Documents/Radiative_Transfer/vSmartMOM_ISOP.jl/src/Absorption/constants/pseudo_line_lists/isoprene/c5h8_isoprene.101")
+                    hitran_data = vSmartMOM.Absorption.read_hitran_isoprene("vSmartMOM_ISOP.jl/src/Absorption/constants/pseudo_line_lists/isoprene/c5h8_isoprene.101")
                 else
                     # Obtain hitran data for this molecule
                     hitran_data = read_hitran(artifact(params.absorption_params.molecules[i_band][molec_i]), iso=1)
