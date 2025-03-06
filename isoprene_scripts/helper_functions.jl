@@ -158,3 +158,29 @@ function reduce_profile(n::Int, profile::AtmosphericProfile)
 
     return AtmosphericProfile(lat, lon, psurf, T, q, p_full, p_levels, vmr_h2o, vcd_dry, vcd_h2o)
 end;
+
+"Reads in MERRA2 data"
+function retrieve_merra2_conditions(date, startTime, lat, lon)
+    # Feel free to change the MERRA2 file and folder paths
+    MerraFile = "MERRA2_400.inst6_3d_ana_Nv." * date * ".nc4";
+    MerraFolder = "MERRA2/";
+    MerraFilePath = joinpath(MerraFolder, MerraFile);
+
+    # These files have 00, 06, 12 or 18 in UTC, i.e. 6 hourly data stacked together
+    hour = parse(Int, chop(startTime));
+    hour_index = Int(hour / 6);
+
+    # Read atmos profile (from helperfunctions.jl)
+    return read_atmos_profile(MerraFilePath, lat, lon, hour_index);
+end
+
+"Planck function (returns in mW/m²-sr-cm⁻¹)"
+function planck_spectrum_wn_i(T::Real, ν_grid)
+    c1 = 1.1910427 * 10^(-5)    # mW/m²-sr-cm⁻¹
+    c2 = 1.4387752              # K⋅cm
+
+    # L(ν, T) = c1⋅ν³/(exp(c2⋅ν/T) - 1)
+    radiance = c1 .* (ν_grid.^3) ./ (exp.(c2 * ν_grid / T) .- 1) ./ 1000 # Returns in W/m²-sr-cm⁻¹
+
+    return radiance
+end
