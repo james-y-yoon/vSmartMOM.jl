@@ -26,3 +26,13 @@ wigner_values_sparse.jld
 wigner_values.jld
 *.pyc
 *.hdf.nc4
+isoprene_scripts/MERRA2/MERRA2_400.inst6_3d_ana_Nv.20190701.nc4
+isoprene_scripts/MERRA2/MERRA2_400.inst6_3d_ana_Nv.20190702.nc4
+isoprene_scripts/MERRA2/MERRA2_400.inst6_3d_ana_Nv.20190703.nc4
+isoprene_scripts/MERRA2/MERRA2_400.inst6_3d_ana_Nv.20190704.nc4
+isoprene_scripts/MERRA2/MERRA2_400.inst6_3d_ana_Nv.20190705.nc4
+isoprene_scripts/MERRA2/MERRA2_400.inst6_3d_ana_Nv.20190706.nc4
+isoprene_scripts/MERRA2/MERRA2_400.inst6_3d_ana_Nv.20190708.nc4
+isoprene_scripts/MERRA2/MERRA2_400.inst6_3d_ana_Nv.20190707.nc4
+isoprene_scripts/MERRA2/MERRA2_400.inst6_3d_ana_Nv.20190710.nc4
+isoprene_scripts/MERRA2/MERRA2_400.inst6_3d_ana_Nv.20190709.nc4
