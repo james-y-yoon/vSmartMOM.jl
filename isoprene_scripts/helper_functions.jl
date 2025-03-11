@@ -86,6 +86,7 @@ function read_atmos_profile(file::String, lat::Real, lon::Real, timeIndex; g₀=
     return AtmosphericProfile(lat, lon, psurf, T, q, p_full, p_half, vmr_h2o, vcd_dry, vcd_h2o)
 end;
 
+
 "Computes cross section matrix for arbitrary number of absorbers"
 function compute_profile_crossSections_isoprene(
         profile::AtmosphericProfile, 
@@ -165,7 +166,7 @@ function retrieve_merra2_conditions(date, startTime, lat, lon)
     MerraFile = "MERRA2_400.inst6_3d_ana_Nv." * date * ".nc4";
     MerraFolder = "MERRA2/";
     MerraFilePath = joinpath(MerraFolder, MerraFile);
-
+    
     # These files have 00, 06, 12 or 18 in UTC, i.e. 6 hourly data stacked together
     hour = parse(Int, chop(startTime));
     hour_index = Int(hour / 6);
@@ -173,6 +174,35 @@ function retrieve_merra2_conditions(date, startTime, lat, lon)
     # Read atmos profile (from helperfunctions.jl)
     return read_atmos_profile(MerraFilePath, lat, lon, hour_index);
 end
+
+function retrieve_merra2_skin_temperature(date, startTime, lat, lon)
+    MerraFile = "MERRA2_400.inst1_2d_asm_Nx." * date * ".nc4";
+    MerraFolder = "MERRA2/skin_temperature";
+    MerraFilePath = joinpath(MerraFolder, MerraFile);
+
+    hour = parse(Int, chop(startTime));
+    timeIndex = Int(hour);
+
+    ds = Dataset(MerraFilePath)
+
+    # See how easy it is to actually extract data? Note the [:] in the end reads in ALL the data in one step
+    lat_   = ds["lat"][:]
+    lon_   = ds["lon"][:]
+    
+    FT = eltype(lat_)
+    lat = FT(lat)
+    lon = FT(lon)
+
+    # Find index (nearest neighbor, one could envision interpolation in space and time!):
+    iLat = argmin(abs.(lat_ .- lat))
+    iLon = argmin(abs.(lon_ .- lon))
+
+    skin_temperature  = ds["TS"][ iLon,iLat, timeIndex]
+    
+    close(ds)
+    return skin_temperature
+end
+
 
 "Planck function (returns in mW/m²-sr-cm⁻¹)"
 function planck_spectrum_wn_i(T::Real, ν_grid)

@@ -45,6 +45,7 @@ function rt_run(RS_type::AbstractRamanType,
 
     temp_profile = model.profile.T; # Added to calculate thermal emissions at each layer (JY)
     wavenumber_region = model.params.spec_bands; # Added to calculate thermal emissions at each layer (JY)
+    surface_skin_temperature = model.profile.surface_skin_temperature;
     
     pol_type = model.params.polarization_type
     @unpack max_m = model.params
@@ -171,15 +172,13 @@ function rt_run(RS_type::AbstractRamanType,
             #@show "Kernel", Array(composite_layer.J₀⁻)[1,1,2650]
         end 
         
-        temperature_of_surface = temp_profile[end];
-
         # Create surface matrices:
         @timeit "Create Surface" create_surface_layer!(brdf, 
                             added_layer_surface, 
                             SFI, m, 
                             pol_type, 
                             quad_points, 
-                            temperature_of_surface,
+                            surface_skin_temperature,
                             wavenumber_region,
                             arr_type(τ_sum_all[:,end]), 
                             model.params.architecture,

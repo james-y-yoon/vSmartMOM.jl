@@ -193,7 +193,7 @@ function reduce_profile(n::Int, profile::AtmosphericProfile{FT}) where {FT}
         end
     end
 
-    return AtmosphericProfile(T, p_full, q, p_half, vmr_h2o, vcd_dry, vcd_h2o, new_vmr,Δz_)
+    return AtmosphericProfile(T, profile.surface_skin_temperature, p_full, q, p_half, vmr_h2o, vcd_dry, vcd_h2o, new_vmr,Δz_)
 end
 
 """

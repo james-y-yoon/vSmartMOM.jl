@@ -197,6 +197,8 @@ function parameters_from_yaml(file_path)
     p = convert.(FT, params_dict["atmospheric_profile"]["p"]) # Boundaries
     q = "q" in keys(params_dict["atmospheric_profile"]) ? # Specific humidity, if it's specified. 
             convert.(FT, params_dict["atmospheric_profile"]["q"]) : zeros(length(T)) # Otherwise 0
+    surface_skin_temperature = "surface_skin_temperature" in keys(params_dict["atmospheric_profile"]) ? # Skin temperature
+            convert.(FT, params_dict["atmospheric_profile"]["surface_skin_temperature"]) : T[end] # Otherwise 0
 
     # absorption group
     if "absorption" in keys(params_dict)
@@ -275,7 +277,7 @@ function parameters_from_yaml(file_path)
                                 FT(params_dict["geometry"]["obs_alt"]),
 
                                 # atmospheric_profile group
-                                convert.(FT,T), convert.(FT,p), convert.(FT,q), 
+                                convert.(FT,T), convert.(FT,p), convert.(FT,q), FT(surface_skin_temperature),
                                 params_dict["atmospheric_profile"]["profile_reduction"],
 
                                 # absorption group

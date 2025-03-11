@@ -29,7 +29,7 @@ function model_from_parameters(params::vSmartMOM_Parameters)
     vmr = isnothing(params.absorption_params) ? Dict() : params.absorption_params.vmr
     p_full, p_half, vmr_h2o, vcd_dry, vcd_h2o, new_vmr, Δz = compute_atmos_profile_fields(params.T, params.p, params.q, vmr)
 
-    profile = AtmosphericProfile(params.T, p_full, params.q, p_half, vmr_h2o, vcd_dry, vcd_h2o, new_vmr,Δz)
+    profile = AtmosphericProfile(params.T, params.surface_skin_temperature, p_full, params.q, p_half, vmr_h2o, vcd_dry, vcd_h2o, new_vmr,Δz)
     
     # Reduce the profile to the number of target layers (if specified)
     if params.profile_reduction_n != -1

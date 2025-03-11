@@ -20,6 +20,8 @@ This file contains all types that are used in the vSmartMOM module:
 struct AtmosphericProfile{FT, VMR <: Union{Real, Vector}}
     "Temperature Profile"
     T::Array{FT,1}
+    "Surface Temperature"
+    surface_skin_temperature::FT
     "Pressure Profile (Full)"
     p_full::Array{FT,1}
     "Specific humidity profile"
@@ -436,9 +438,11 @@ mutable struct vSmartMOM_Parameters{FT<:Union{AbstractFloat, ForwardDiff.Dual}}
     p::AbstractArray{FT}
     "Specific humidity profile"
     q::AbstractArray{FT}
+    "Surface temperature [K]"
+    surface_skin_temperature::FT
     "Length of profile reduction"
     profile_reduction_n::Integer
-
+    
     # absorption group
     "Optional struct that holds all absorption-related parameters"
     absorption_params::Union{AbsorptionParameters, Nothing}
