@@ -29,7 +29,7 @@ function model_from_parameters(params::vSmartMOM_Parameters)
     vmr = isnothing(params.absorption_params) ? Dict() : params.absorption_params.vmr
     p_full, p_half, vmr_h2o, vcd_dry, vcd_h2o, new_vmr, Δz = compute_atmos_profile_fields(params.T, params.p, params.q, vmr)
 
-    profile = AtmosphericProfile(params.T, p_full, params.q, p_half, vmr_h2o, vcd_dry, vcd_h2o, new_vmr,Δz)
+    profile = AtmosphericProfile(params.T, params.surface_skin_temperature, p_full, params.q, p_half, vmr_h2o, vcd_dry, vcd_h2o, new_vmr,Δz)
     
     # Reduce the profile to the number of target layers (if specified)
     if params.profile_reduction_n != -1
@@ -70,8 +70,7 @@ function model_from_parameters(params::vSmartMOM_Parameters)
                 
                 # JY: Added isoprene
                 if ( params.absorption_params.molecules[i_band][molec_i] == "ISOP" )
-                    print(vSmartMOM.Absorption.read_hitran_isoprene)
-                    hitran_data = vSmartMOM.Absorption.read_hitran_isoprene("HITRAN/c5h8_isoprene.101")
+                    hitran_data = vSmartMOM.Absorption.read_hitran_isoprene("../../src/Absorption/constants/pseudo_line_lists/isoprene/c5h8_isoprene.101")
                 else
                     # Obtain hitran data for this molecule
                     hitran_data = read_hitran(artifact(params.absorption_params.molecules[i_band][molec_i]), iso=1)
@@ -90,7 +89,7 @@ function model_from_parameters(params::vSmartMOM_Parameters)
 
                 # JY: Added isoprene
                 if ( params.absorption_params.molecules[i_band][molec_i] == "ISOP" )
-                    compute_absorption_profile_isoprene!(τ_abs[i_band], absorption_model, params.spec_bands[i_band],profile.vmr[params.absorption_params.molecules[i_band][molec_i]], profile);
+                    @timeit "Absorption Coeff"  compute_absorption_profile_isoprene!(τ_abs[i_band], absorption_model, params.spec_bands[i_band],profile.vmr[params.absorption_params.molecules[i_band][molec_i]], profile);
                 else
                     @timeit "Absorption Coeff"  compute_absorption_profile!(τ_abs[i_band], absorption_model, params.spec_bands[i_band],profile.vmr[params.absorption_params.molecules[i_band][molec_i]], profile);
                 end
