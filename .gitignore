@@ -45,3 +45,5 @@ isoprene_scripts/MERRA2/skin_temperature/MERRA2_400.inst1_2d_asm_Nx.20190704.nc4
 isoprene_scripts/MERRA2/skin_temperature/MERRA2_400.inst1_2d_asm_Nx.20190703.nc4
 isoprene_scripts/MERRA2/skin_temperature/MERRA2_400.inst1_2d_asm_Nx.20190702.nc4
 isoprene_scripts/MERRA2/skin_temperature/MERRA2_400.inst1_2d_asm_Nx.20190701.nc4
+isoprene_scripts/gSAM_Chem/Data/1D/BORNEO_highest_variability_higher_SM.nc
+*.nc
